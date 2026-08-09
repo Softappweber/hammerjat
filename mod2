@@ -1,0 +1,141 @@
+// =====================================================
+// PERSONAL STORAGE BACKEND
+// Google Apps Script + Google Drive
+// =====================================================
+
+const ROOT_FOLDER_NAME = "My Personal Storage";
+
+function doGet(e) {
+  const action = e && e.parameter ? e.parameter.action : "";
+  const callback = e && e.parameter ? e.parameter.callback : "";
+
+  let result;
+
+  if (action === "list") {
+    result = listItems(e.parameter.type || "");
+  } else {
+    result = { ok: true, service: "Personal Storage Backend" };
+  }
+
+  const json = JSON.stringify(result);
+
+  // JSONP is used for read operations from a GitHub Pages frontend.
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + "(" + json + ")")
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+
+  return ContentService
+    .createTextOutput(json)
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    const p = e.parameter || {};
+    let result;
+
+    if (p.action === "save") {
+      result = saveItem(p.type, p.title, p.body, p.url);
+    } else if (p.action === "upload") {
+      result = uploadFile(p.type, p.name, p.mimeType, p.data);
+    } else {
+      result = { ok: false, error: "Unknown action." };
+    }
+
+    return json_(result);
+  } catch (err) {
+    return json_({ok:false,error:String(err)});
+  }
+}
+
+function getRootFolder_() {
+  const folders = DriveApp.getFoldersByName(ROOT_FOLDER_NAME);
+  if (folders.hasNext()) return folders.next();
+  return DriveApp.createFolder(ROOT_FOLDER_NAME);
+}
+
+function getTypeFolder_(type) {
+  const allowed = ["photos","bookmarks","notes","links","files"];
+  if (allowed.indexOf(type) === -1) throw new Error("Invalid storage category.");
+
+  const root = getRootFolder_();
+  const folders = root.getFoldersByName(type);
+  if (folders.hasNext()) return folders.next();
+  return root.createFolder(type);
+}
+
+function saveItem(type, title, body, url) {
+  if (!title) throw new Error("Title is required.");
+
+  const folder = getTypeFolder_(type);
+  const obj = {
+    kind: type === "notes" ? "note" : "link",
+    title: title,
+    body: body || "",
+    url: url || "",
+    date: new Date().toISOString()
+  };
+
+  const fileName = new Date().getTime() + "_" + title.substring(0,50) + ".json";
+  folder.createFile(fileName, JSON.stringify(obj, null, 2), MimeType.PLAIN_TEXT);
+
+  return {ok:true};
+}
+
+function uploadFile(type, name, mimeType, base64) {
+  if (!name || !base64) throw new Error("File data is missing.");
+
+  const bytes = Utilities.base64Decode(base64);
+  const blob = Utilities.newBlob(bytes, mimeType || "application/octet-stream", name);
+  const file = getTypeFolder_(type).createFile(blob);
+
+  return {
+    ok:true,
+    id:file.getId(),
+    name:file.getName(),
+    fileUrl:file.getUrl()
+  };
+}
+
+function listItems(type) {
+  const folder = getTypeFolder_(type);
+  const files = folder.getFiles();
+  const items = [];
+
+  while (files.hasNext()) {
+    const f = files.next();
+    const name = f.getName();
+
+    if (name.endsWith(".json")) {
+      try {
+        const obj = JSON.parse(f.getBlob().getDataAsString());
+        items.push(obj);
+      } catch (_) {}
+    } else {
+      items.push({
+        kind:"file",
+        name:name,
+        fileUrl:f.getUrl(),
+        date:f.getDateCreated().toISOString()
+      });
+    }
+  }
+
+  items.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  return {ok:true,items:items};
+}
+
+function json_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Optional first-run setup.
+function setupStorage() {
+  getRootFolder_();
+  ["photos","bookmarks","notes","links","files"].forEach(getTypeFolder_);
+  Logger.log("Personal Storage folders created.");
+}
