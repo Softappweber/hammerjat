@@ -93,7 +93,7 @@ button.secondary{background:#fff;color:#17181a;border:1px solid #d8dbe0;border-r
 
 <script>
 /* Paste your deployed Google Apps Script Web App URL here. */
-const API_URL = "https://script.google.com/macros/s/AKfycbzUJSyxY6dc8xVFUMO5xMKZUBuMZ6ZfIyevNysNNmUJ4JNEstWS1-hl3GW8I4ra2mDggQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyOabq5ebmFfPCchiKdyofatDktx6SNpZeuala9jxaU1Z3h9ceeyCIYziISqiNNEHJPbA/exec";
 
 let currentTab = "photos";
 
@@ -177,8 +177,7 @@ async function uploadFiles(inputId,type){
     setStatus("Uploading "+file.name+"...");
     const base64=await toBase64(file);
     try{
-      const result=await post("upload",{type,name:file.name,mimeType:file.type||"application/octet-stream",data:base64});
-      if(!result || result.ok===false) throw new Error(result && result.error ? result.error : "Upload failed");
+      await post("upload",{type,name:file.name,mimeType:file.type||"application/octet-stream",data:base64});
     }catch(e){alert("Upload failed: "+file.name)}
   }
   document.getElementById(inputId).value="";
