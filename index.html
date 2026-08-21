@@ -36,6 +36,48 @@
   --shadow-lg:0 20px 50px rgba(0,0,0,0.1);
 }
 
+[data-theme="ocean"]{
+  --bg:#0c1a2d;
+  --surface:#10233d;
+  --surface2:#16314f;
+  --border:#1e4264;
+  --text:#e8f0fa;
+  --text2:#9ab8d8;
+  --text3:#5a7d9e;
+  --accent:#0ea5e9;
+  --accent2:#3b82f6;
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg:0 20px 60px rgba(0,0,0,0.5);
+}
+
+[data-theme="forest"]{
+  --bg:#0d1a12;
+  --surface:#132619;
+  --surface2:#1a3320;
+  --border:#23452b;
+  --text:#e8f5ec;
+  --text2:#a3c9b0;
+  --text3:#5e8c6d;
+  --accent:#22c55e;
+  --accent2:#16a34a;
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg:0 20px 60px rgba(0,0,0,0.5);
+}
+
+[data-theme="sunset"]{
+  --bg:#1a0f0f;
+  --surface:#261414;
+  --surface2:#331b1b;
+  --border:#452525;
+  --text:#faf0f0;
+  --text2:#c9a3a3;
+  --text3:#8e5e5e;
+  --accent:#f97316;
+  --accent2:#ef4444;
+  --shadow:0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg:0 20px 60px rgba(0,0,0,0.5);
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;
@@ -47,6 +89,37 @@ body{
 }
 
 .app{max-width:1200px;margin:auto;padding:24px 20px 60px}
+
+/* ============ UPLOAD PROGRESS BAR ============ */
+#uploadProgressContainer{
+  position:fixed;
+  top:0;left:0;width:100%;
+  z-index:9999;
+  display:none;
+}
+#uploadProgressContainer.active{display:block}
+#uploadProgressBar{
+  height:4px;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  width:0%;
+  transition:width 0.3s ease;
+  box-shadow:0 0 20px rgba(99,102,241,0.6);
+}
+#uploadProgressText{
+  position:fixed;
+  top:12px;right:16px;
+  background:var(--surface);
+  color:var(--text);
+  padding:10px 18px;
+  border-radius:10px;
+  font-size:13px;
+  font-weight:600;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  z-index:9999;
+  display:none;
+}
+#uploadProgressText.active{display:block}
 
 /* ============ HEADER ============ */
 header{
@@ -72,7 +145,7 @@ header{
 .brand h1{font-size:20px;font-weight:700;letter-spacing:-0.4px}
 .brand p{font-size:11px;color:var(--text3);margin-top:2px}
 
-.header-right{display:flex;align-items:center;gap:12px}
+.header-right{display:flex;align-items:center;gap:10px}
 
 #status{
   font-size:11px;color:var(--text2);
@@ -82,18 +155,19 @@ header{
   font-weight:500;
 }
 
-.theme-btn{
-  width:40px;height:40px;
+.theme-select{
   background:var(--surface2);
   border:1px solid var(--border);
   border-radius:10px;
-  cursor:pointer;
-  font-size:18px;
-  display:flex;align-items:center;justify-content:center;
-  transition:var(--transition);
+  padding:8px 12px;
   color:var(--text);
+  font-size:13px;
+  cursor:pointer;
+  font-weight:500;
+  transition:var(--transition);
 }
-.theme-btn:hover{transform:scale(1.05);border-color:var(--accent)}
+.theme-select:focus{outline:none;border-color:var(--accent)}
+.theme-select option{background:var(--surface);color:var(--text)}
 
 /* ============ NAVIGATION ============ */
 nav{
@@ -223,6 +297,7 @@ button.primary:active{transform:translateY(0)}
   padding:16px 0;
   transition:var(--transition);
   border-radius:8px;
+  position:relative;
 }
 .item:first-child{border-top:0}
 .item:hover{
@@ -240,6 +315,31 @@ button.primary:active{transform:translateY(0)}
   font-size:13px;
 }
 .item a:hover{border-bottom-color:var(--accent)}
+.item-actions{
+  position:absolute;
+  top:12px;
+  right:12px;
+  display:flex;
+  gap:6px;
+  opacity:0;
+  transition:var(--transition);
+}
+.item:hover .item-actions{opacity:1}
+.item-action-btn{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:12px;
+  color:var(--text2);
+  transition:var(--transition);
+}
+.item-action-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent);
+  background:var(--surface2);
+}
 .empty{
   color:var(--text3);
   padding:28px 0;
@@ -254,13 +354,17 @@ button.primary:active{transform:translateY(0)}
 @media(max-width:700px){
   nav{grid-template-columns:repeat(2,1fr);gap:4px}
   header{flex-direction:column;align-items:flex-start;gap:14px}
-  .header-right{width:100%;justify-content:space-between}
+  .header-right{width:100%;justify-content:space-between;flex-wrap:wrap}
   .panel{padding:18px}
   .filebox{padding:24px}
 }
 </style>
 </head>
 <body>
+
+<div id="uploadProgressBar"></div>
+<div id="uploadProgressText">Uploading...</div>
+
 <div class="app">
 
 <header>
@@ -273,7 +377,13 @@ button.primary:active{transform:translateY(0)}
   </div>
   <div class="header-right">
     <span id="status">Ready</span>
-    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+    <select class="theme-select" id="themeSelect" onchange="changeTheme(this.value)">
+      <option value="dark">🌙 Dark</option>
+      <option value="light">☀️ Light</option>
+      <option value="ocean">🌊 Ocean</option>
+      <option value="forest">🌲 Forest</option>
+      <option value="sunset">🌅 Sunset</option>
+    </select>
   </div>
 </header>
 
@@ -336,27 +446,18 @@ const API_URL = "https://script.google.com/macros/s/AKfycbyOabq5ebmFfPCchiKdyofa
 
 let currentTab = "photos";
 
-// Theme toggle
-function toggleTheme(){
-  const html = document.documentElement;
-  const btn = document.getElementById('themeBtn');
-  if(html.getAttribute('data-theme') === 'dark'){
-    html.setAttribute('data-theme','light');
-    btn.textContent = '☀️';
-    localStorage.setItem('theme','light');
-  } else {
-    html.setAttribute('data-theme','dark');
-    btn.textContent = '🌙';
-    localStorage.setItem('theme','dark');
-  }
+// ============ THEME SYSTEM ============
+function changeTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
 }
 
 // Load saved theme
-if(localStorage.getItem('theme') === 'light'){
-  document.documentElement.setAttribute('data-theme','light');
-  document.getElementById('themeBtn').textContent = '☀️';
-}
+const savedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', savedTheme);
+document.getElementById('themeSelect').value = savedTheme;
 
+// ============ NAVIGATION ============
 document.querySelectorAll("nav button").forEach(btn=>{
   btn.onclick=()=>{
     currentTab=btn.dataset.tab;
@@ -378,6 +479,46 @@ async function post(action,data={}){
   return await r.json();
 }
 
+// ============ PREMIUM DATE FORMAT ============
+function formatPremiumDate(dateStr){
+  const d = new Date(dateStr);
+  const day = d.getDate();
+  const month = d.toLocaleString('en-US', {month:'long'});
+  const year = d.getFullYear();
+  const weekday = d.toLocaleString('en-US', {weekday:'long'});
+  
+  let suffix = 'th';
+  if(day === 1 || day === 21 || day === 31) suffix = 'st';
+  else if(day === 2 || day === 22) suffix = 'nd';
+  else if(day === 3 || day === 23) suffix = 'rd';
+  
+  const hours = d.getHours();
+  const minutes = d.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+  const minutesStr = minutes < 10 ? '0' + minutes : minutes;
+  
+  return `${day}${suffix} ${month} ${year}, ${weekday}, ${hours12}:${minutesStr} ${ampm}`;
+}
+
+// ============ UPLOAD PROGRESS ============
+function showUploadProgress(show, percent = 0){
+  const bar = document.getElementById('uploadProgressBar');
+  const text = document.getElementById('uploadProgressText');
+  
+  if(show){
+    bar.parentElement.classList.add('active');
+    bar.style.width = percent + '%';
+    text.classList.add('active');
+    text.textContent = 'Uploading... ' + Math.round(percent) + '%';
+  } else {
+    bar.parentElement.classList.remove('active');
+    bar.style.width = '0%';
+    text.classList.remove('active');
+  }
+}
+
+// ============ LOAD ITEMS ============
 async function loadItems(type){
   if(!API_URL || API_URL.includes("PASTE_")) return;
   setStatus("Loading...");
@@ -395,55 +536,141 @@ async function loadItems(type){
   }catch(e){setStatus("Load error")}
 }
 
+// ============ RENDER ITEMS ============
 function render(type,items){
   const el=document.getElementById(type+"List");
   if(!items.length){el.innerHTML='<div class="empty">Nothing saved yet.</div>';return}
-  el.innerHTML=items.map(x=>{
-    if(x.kind==="note") return `<div class="item"><div class="item-title">${esc(x.title)}</div><div>${esc(x.body)}</div><div class="item-meta">${esc(x.date||"")}</div></div>`;
-    return `<div class="item"><div class="item-title">${esc(x.title||x.name||"File")}</div>${x.url?`<a href="${escAttr(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>`:""}${x.url?"" : x.fileUrl?`<a href="${escAttr(x.fileUrl)}" target="_blank">Open file</a>`:""}<div class="item-meta">${esc(x.date||"")}</div></div>`;
+  
+  el.innerHTML=items.map((x, index)=>{
+    const dateStr = x.date || '';
+    const formattedDate = dateStr ? formatPremiumDate(dateStr) : '';
+    
+    if(x.kind==="note"){
+      return `<div class="item">
+        <div class="item-title">${esc(x.title)}</div>
+        <div>${esc(x.body)}</div>
+        <div class="item-meta">${formattedDate}</div>
+      </div>`;
+    }
+    
+    if(x.url){
+      // Bookmark or Link
+      return `<div class="item">
+        <div class="item-title">${esc(x.title)}</div>
+        <a href="${escAttr(x.url)}" target="_blank" rel="noopener">${esc(x.url)}</a>
+        <div class="item-meta">${formattedDate}</div>
+      </div>`;
+    }
+    
+    // File
+    return `<div class="item">
+      <div class="item-title">${esc(x.name || "File")}</div>
+      ${x.fileUrl ? `<a href="${escAttr(x.fileUrl)}" target="_blank">Open file</a>` : ''}
+      <div class="item-meta">${formattedDate}</div>
+      <div class="item-actions">
+        <button class="item-action-btn" onclick="renameFile('${type}', ${index}, '${esc(x.id || '')}')">✏️ Rename</button>
+      </div>
+    </div>`;
   }).join("");
 }
 
+// ============ RENAME FILE ============
+async function renameFile(type, index, fileId){
+  const oldName = fileId || 'file';
+  const newName = prompt('Enter new name:', oldName.replace(/\.[^.]+$/, ''));
+  if(!newName || newName === oldName) return;
+  
+  setStatus("Renaming...");
+  try{
+    await post("rename", {type, index, newName});
+    await loadItems(type);
+    setStatus("Renamed!");
+  }catch(e){
+    setStatus("Rename error");
+    alert("Rename failed");
+  }
+}
+
+// ============ SAVE FUNCTIONS ============
 async function saveBookmark(){
   const title=document.getElementById("bookmarkTitle").value.trim();
   const url=document.getElementById("bookmarkUrl").value.trim();
   if(!title||!url)return alert("Enter title and URL.");
   setStatus("Saving...");
-  try{await post("save",{type:"bookmarks",title,url});document.getElementById("bookmarkTitle").value="";document.getElementById("bookmarkUrl").value="";await loadItems("bookmarks");}
-  catch(e){setStatus("Save error")}
+  try{
+    await post("save",{type:"bookmarks",title,url});
+    document.getElementById("bookmarkTitle").value="";
+    document.getElementById("bookmarkUrl").value="";
+    await loadItems("bookmarks");
+  }catch(e){setStatus("Save error")}
 }
+
 async function saveLink(){
   const title=document.getElementById("linkTitle").value.trim();
   const url=document.getElementById("linkUrl").value.trim();
   if(!title||!url)return alert("Enter title and URL.");
   setStatus("Saving...");
-  try{await post("save",{type:"links",title,url});document.getElementById("linkTitle").value="";document.getElementById("linkUrl").value="";await loadItems("links");}
-  catch(e){setStatus("Save error")}
+  try{
+    await post("save",{type:"links",title,url});
+    document.getElementById("linkTitle").value="";
+    document.getElementById("linkUrl").value="";
+    await loadItems("links");
+  }catch(e){setStatus("Save error")}
 }
+
 async function saveNote(){
   const title=document.getElementById("noteTitle").value.trim();
   const body=document.getElementById("noteBody").value.trim();
   if(!title||!body)return alert("Enter title and note.");
   setStatus("Saving...");
-  try{await post("save",{type:"notes",title,body});document.getElementById("noteTitle").value="";document.getElementById("noteBody").value="";await loadItems("notes");}
-  catch(e){setStatus("Save error")}
+  try{
+    await post("save",{type:"notes",title,body});
+    document.getElementById("noteTitle").value="";
+    document.getElementById("noteBody").value="";
+    await loadItems("notes");
+  }catch(e){setStatus("Save error")}
 }
 
+// ============ UPLOAD FILES ============
 async function uploadFiles(inputId,type){
   const files=[...document.getElementById(inputId).files];
   if(!files.length)return alert("Choose a file first.");
+  
+  const totalFiles = files.length;
+  let completedFiles = 0;
+  
   for(const file of files){
-    if(file.size>20*1024*1024){alert(file.name+" is over the 20 MB per-file limit.");continue}
+    if(file.size>20*1024*1024){
+      alert(file.name+" is over the 20 MB per-file limit.");
+      continue;
+    }
+    
+    showUploadProgress(true, (completedFiles / totalFiles) * 100);
     setStatus("Uploading "+file.name+"...");
+    
     const base64=await toBase64(file);
+    
     try{
-      await post("upload",{type,name:file.name,mimeType:file.type||"application/octet-stream",data:base64});
-    }catch(e){alert("Upload failed: "+file.name)}
+      await post("upload",{
+        type,
+        name:file.name,
+        mimeType:file.type||"application/octet-stream",
+        data:base64
+      });
+    }catch(e){
+      alert("Upload failed: "+file.name);
+    }
+    
+    completedFiles++;
+    showUploadProgress(true, (completedFiles / totalFiles) * 100);
   }
+  
+  showUploadProgress(false);
   document.getElementById(inputId).value="";
   await loadItems(type);
   setStatus("Ready");
 }
+
 function toBase64(file){
   return new Promise((resolve,reject)=>{
     const r=new FileReader();
@@ -452,6 +679,7 @@ function toBase64(file){
     r.readAsDataURL(file);
   });
 }
+
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
 function escAttr(s){return esc(s)}
 </script>
